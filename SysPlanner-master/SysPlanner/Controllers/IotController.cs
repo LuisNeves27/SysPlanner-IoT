@@ -50,8 +50,8 @@ namespace SysPlanner.Controllers
                     Titulo = "Lembrete Automático: Chegou em Casa",
                     Descricao = $"Detectado chegada em {saved.Area} às {saved.Timestamp:O}",
                     Data = DateTime.UtcNow.AddHours(1),
-                    Prioridade = SysPlanner.Infrastructure.Persistance.Enums.Prioridade.Media,
-                    Categoria = SysPlanner.Infrastructure.Persistance.Enums.Categoria.Pessoal,
+                    Prioridade = SysPlanner.Infrastructure.Persistance.Enums.Prioridade.MODERADA,
+                    Categoria = SysPlanner.Infrastructure.Persistance.Enums.Categoria.SAUDE,
                     UsuarioId = req.UserId
                 };
 
