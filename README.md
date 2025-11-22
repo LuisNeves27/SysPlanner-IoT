@@ -1,4 +1,5 @@
-faça um readme para o meu projeto e um roteiro bem simples e curto . faça o repositorio assim :  # 🚀 SysPlanner
+
+## 🚀 SysPlanner 
 
 **SysPlanner** é uma aplicação desenvolvida em **ASP.NET Core Web API** para gerenciar lembretes criados pelos nossos usuários, oferecendo filtros personalizados, paginação e ordenação.
 
