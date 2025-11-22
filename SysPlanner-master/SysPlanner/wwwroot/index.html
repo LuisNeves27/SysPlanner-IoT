@@ -1,0 +1,291 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SysPlanner - Sistema IoT</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            color: #333;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+            button.iot {
+                background: #ed8936;
+            }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .lembrete-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .iot-panel {
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 SysPlanner IoT</h1>
+            <p>Sistema Inteligente de Lembretes</p>
+        </div>
+
+        <div class="card">
+            <h3>📝 Criar Lembrete</h3>
+            <input type="text" id="titulo" placeholder="Título do lembrete">
+            <textarea id="descricao" placeholder="Descrição detalhada"></textarea>
+            <input type="datetime-local" id="data">
+            <select id="prioridade">
+                <option value="1">🟢 Baixa Prioridade</option>
+                <option value="2">🟡 Média Prioridade</option>
+                <option value="3">🔴 Alta Prioridade</option>
+            </select>
+            <button onclick="criarLembrete()">💾 Salvar Lembrete</button>
+        </div>
+
+        <div class="card">
+            <div class="iot-panel">
+                <h3>📡 Sistema IoT - Simulação</h3>
+                <p>Simule a chegada em casa e veja seus compromissos do dia</p>
+                <button class="iot" onclick="simularChegadaCasa()">🚗 Simular Chegada em Casa</button>
+                <button class="iot" onclick="verificarCompromissosHoje()">📅 Ver Compromissos de Hoje</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📋 Meus Lembretes</h3>
+            <div id="lista"></div>
+        </div>
+    </div>
+
+    <script>
+        let lembretes = JSON.parse(localStorage.getItem('sysplanner_lembretes')) || [];
+
+        // Criar alguns dados de exemplo
+        if (lembretes.length === 0) {
+            const hoje = new Date();
+            const amanha = new Date(hoje);
+            amanha.setDate(amanha.getDate() + 1);
+
+            lembretes = [
+                {
+                    id: 1,
+                    titulo: "Reunião com a equipe",
+                    descricao: "Reunião de planejamento do projeto",
+                    data: hoje.toISOString().slice(0, 16),
+                    prioridade: 3
+                },
+                {
+                    id: 2,
+                    titulo: "Ir ao mercado",
+                    descricao: "Comprar itens para a semana",
+                    data: hoje.toISOString().slice(0, 16),
+                    prioridade: 2
+                },
+                {
+                    id: 3,
+                    titulo: "Estudar para prova",
+                    descricao: "Revisar conteúdo da matéria",
+                    data: amanha.toISOString().slice(0, 16),
+                    prioridade: 3
+                }
+            ];
+            salvarDados();
+        }
+
+        function criarLembrete() {
+            const titulo = document.getElementById('titulo').value;
+            const descricao = document.getElementById('descricao').value;
+            const data = document.getElementById('data').value;
+            const prioridade = document.getElementById('prioridade').value;
+
+            if (!titulo || !data) {
+                alert('❌ Título e data são obrigatórios!');
+                return;
+            }
+
+            const lembrete = {
+                id: Date.now(),
+                titulo: titulo,
+                descricao: descricao,
+                data: data,
+                prioridade: parseInt(prioridade)
+            };
+
+            lembretes.push(lembrete);
+            salvarDados();
+            listarLembretes();
+
+            // Limpar campos
+            document.getElementById('titulo').value = '';
+            document.getElementById('descricao').value = '';
+
+            alert('✅ Lembrete criado com sucesso!');
+        }
+
+        function simularChegadaCasa() {
+            const hoje = new Date().toDateString();
+            const compromissosHoje = lembretes.filter(lembrete => {
+                const dataLembrete = new Date(lembrete.data).toDateString();
+                return dataLembrete === hoje;
+            });
+
+            const totalCompromissos = compromissosHoje.length;
+            const compromissosRestantes = compromissosHoje.filter(lembrete => {
+                const dataLembrete = new Date(lembrete.data);
+                return dataLembrete > new Date();
+            }).length;
+
+            let mensagem = `🏠 Bem-vindo(a) de volta à casa!\n\n`;
+
+            if (totalCompromissos === 0) {
+                mensagem += `🎉 Você não tem compromissos para hoje!\nAproveite seu descanso!`;
+            } else {
+                mensagem += `📊 Resumo do seu dia:\n`;
+                mensagem += `• Total de compromissos: ${totalCompromissos}\n`;
+                mensagem += `• Compromissos restantes: ${compromissosRestantes}\n\n`;
+
+                if (compromissosRestantes > 0) {
+                    mensagem += `⚠️ Você ainda tem ${compromissosRestantes} compromisso(s) hoje!\n`;
+                    compromissosHoje.forEach(compromisso => {
+                        const hora = new Date(compromisso.data).toLocaleTimeString('pt-BR', {
+                            hour: '2-digit', minute: '2-digit'
+                        });
+                        mensagem += `\n• ${compromisso.titulo} - ${hora}`;
+                    });
+                } else {
+                    mensagem += `✅ Todos os compromissos de hoje foram concluídos!\nParabéns! 🎉`;
+                }
+            }
+
+            alert(mensagem);
+        }
+
+        function verificarCompromissosHoje() {
+            const hoje = new Date().toDateString();
+            const compromissosHoje = lembretes.filter(lembrete => {
+                const dataLembrete = new Date(lembrete.data).toDateString();
+                return dataLembrete === hoje;
+            });
+
+            if (compromissosHoje.length === 0) {
+                alert('📅 Você não tem compromissos para hoje!');
+                return;
+            }
+
+            let mensagem = `📅 Seus compromissos de hoje:\n\n`;
+            compromissosHoje.forEach((compromisso, index) => {
+                const hora = new Date(compromisso.data).toLocaleTimeString('pt-BR', {
+                    hour: '2-digit', minute: '2-digit'
+                });
+                const prioridade = compromisso.prioridade === 3 ? '🔴' : compromisso.prioridade === 2 ? '🟡' : '🟢';
+                mensagem += `${index + 1}. ${prioridade} ${compromisso.titulo} - ${hora}\n`;
+            });
+
+            mensagem += `\nTotal: ${compromissosHoje.length} compromisso(s)`;
+            alert(mensagem);
+        }
+
+        function listarLembretes() {
+            const listaElement = document.getElementById('lista');
+
+            if (lembretes.length === 0) {
+                listaElement.innerHTML = '<p>Nenhum lembrete cadastrado.</p>';
+                return;
+            }
+
+            // Ordenar por data
+            const lembretesOrdenados = [...lembretes].sort((a, b) => new Date(a.data) - new Date(b.data));
+
+            listaElement.innerHTML = lembretesOrdenados.map(lembrete => {
+                const data = new Date(lembrete.data);
+                const dataFormatada = data.toLocaleString('pt-BR');
+                const prioridade = lembrete.prioridade === 3 ? '🔴 Alta' : lembrete.prioridade === 2 ? '🟡 Média' : '🟢 Baixa';
+                const hoje = new Date().toDateString() === data.toDateString();
+
+                return `
+                        <div class="lembrete-item" style="border-left: 4px solid ${lembrete.prioridade === 3 ? '#f56565' :
+                        lembrete.prioridade === 2 ? '#ed8936' : '#48bb78'
+                    };">
+                            <strong>${lembrete.titulo}</strong>
+                            <div style="color: #666; font-size: 0.9em;">
+                                ${dataFormatada} | ${prioridade} ${hoje ? '| 📅 Hoje' : ''}
+                            </div>
+                            ${lembrete.descricao ? `<div style="margin-top: 5px;">${lembrete.descricao}</div>` : ''}
+                            <button onclick="excluirLembrete(${lembrete.id})" style="background: #f56565; margin-top: 5px;">Excluir</button>
+                        </div>
+                    `;
+            }).join('');
+        }
+
+        function excluirLembrete(id) {
+            if (confirm('Tem certeza que deseja excluir este lembrete?')) {
+                lembretes = lembretes.filter(lembrete => lembrete.id !== id);
+                salvarDados();
+                listarLembretes();
+            }
+        }
+
+        function salvarDados() {
+            localStorage.setItem('sysplanner_lembretes', JSON.stringify(lembretes));
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function () {
+            // Configurar data mínima como hoje
+            const hoje = new Date();
+            document.getElementById('data').min = hoje.toISOString().slice(0, 16);
+
+            // Carregar lembretes
+            listarLembretes();
+        });
+    </script>
+</body>
+</html>

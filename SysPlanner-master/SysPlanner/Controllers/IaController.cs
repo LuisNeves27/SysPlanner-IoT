@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using SysPlanner.Infrastructure.Persistance;
+using SysPlanner.Services;
+using SysPlanner.Services.IA;
 
 namespace SysPlanner.Controllers
 {
@@ -8,31 +9,36 @@ namespace SysPlanner.Controllers
     [ApiVersion("1.0")]
     public class IaController : ControllerBase
     {
-        private readonly ILogger<IaController> _logger;
+        private readonly IAService _iaService;
 
-        public IaController(ILogger<IaController> logger)
+        public IaController(IAService iaService)
         {
-            _logger = logger;
+            _iaService = iaService;
         }
 
+        // ==========================================
+        // 🔥 ROTA PRINCIPAL — GERA E SALVA LEMBRETE
+        // ==========================================
         [HttpPost("generate-reminder")]
-        public async Task<IActionResult> GenerateReminder([FromBody] GenerateReminderRequest req)
+        public async Task<IActionResult> GenerateReminder([FromBody] IARequest req)
         {
-            // POC: geramos um texto simples que simula a IA.
-            // Em produção, aqui você chamaria um serviço de LLM / OpenAI ou modelo local.
-            await Task.Yield();
+            if (req.UserId == Guid.Empty)
+                return BadRequest("UserId inválido.");
 
-            var text = $"Olá! Lembrete gerado automaticamente para o usuário {req.UserId}. " +
-                       $"Resumo do compromisso: {req.Compromisso ?? "Sem detalhe"}. " +
-                       $"Sugestão: checar detalhes e confirmar horário.";
+            var reminder = await _iaService.GerarLembreteIA(req.UserId, req.Descricao);
 
-            return Ok(new { reminder = text });
+            return Ok(new
+            {
+                message = "Lembrete IA criado e salvo com sucesso!",
+                lembrete = reminder
+            });
         }
 
-        public class GenerateReminderRequest
+        public class IARequest
         {
             public Guid UserId { get; set; }
-            public string? Compromisso { get; set; }
+            public string? Descricao { get; set; }
         }
     }
 }
+

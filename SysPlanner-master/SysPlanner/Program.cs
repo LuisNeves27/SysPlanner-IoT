@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using System.Text.Json.Serialization;
-using SysPlanner.Infrastructure.Contexts;
-using SysPlanner.Services.Interfaces;
-using SysPlanner.Services;
 using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.Http;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using SysPlanner.Infrastructure.Contexts;
+using SysPlanner.Services;
+using SysPlanner.Services.IA;
+using SysPlanner.Services.Interfaces;
+using System.Text.Json.Serialization;
 
 public class Program
 {
@@ -80,6 +81,8 @@ public class Program
         // NOVOS serviços IoT / Location
         builder.Services.AddScoped<ILocalizacaoService, LocalizacaoService>();
         builder.Services.AddScoped<IIoTService, IoTService>();
+
+        builder.Services.AddScoped<IAService>();
 
         // Problem details, logging, OpenTelemetry (mantido)
         builder.Services.AddProblemDetails();
