@@ -42,6 +42,10 @@
                 background: #ed8936;
             }
 
+            button.ia {
+                background: #9f7aea;
+            }
+
         input, textarea, select {
             width: 100%;
             padding: 10px;
@@ -68,13 +72,30 @@
             padding: 15px;
             margin: 10px 0;
         }
+
+        .ia-panel {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 15px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🏠 SysPlanner IoT</h1>
-            <p>Sistema Inteligente de Lembretes</p>
+            <p>Sistema Inteligente de Lembretes com IA</p>
+        </div>
+
+        <!-- NOVO: SISTEMA DE IA -->
+        <div class="card">
+            <div class="ia-panel">
+                <h3>🤖 Assistente de IA</h3>
+                <p>Descreva sua rotina e a IA irá sugerir lembretes automaticamente</p>
+                <textarea id="contextoIA" placeholder="Ex: Tenho reunião às 10h, preciso ir ao mercado, consulta médica às 15h, estudar à noite..." rows="3"></textarea>
+                <button class="ia" onclick="sugerirLembretesIA()">🎯 Sugerir Lembretes com IA</button>
+            </div>
         </div>
 
         <div class="card">
@@ -138,6 +159,98 @@
                 }
             ];
             salvarDados();
+        }
+
+        // FUNÇÃO ATUALIZADA: IA PARA SUGERIR LEMBRETES COM DETECÇÃO DE VÍRGULA
+        function sugerirLembretesIA() {
+            const contexto = document.getElementById('contextoIA').value;
+
+            if (!contexto) {
+                alert('❌ Por favor, descreva sua rotina para a IA analisar!');
+                return;
+            }
+
+            // NOVA LÓGICA: Detectar se tem vírgula para múltiplos compromissos
+            let atividades = [];
+
+            if (contexto.includes(',')) {
+                // MÚLTIPLOS COMPROMISSOS - separar por vírgula
+                atividades = contexto.split(',').map(item => item.trim()).filter(item => item);
+            } else {
+                // APENAS 1 COMPROMISSO
+                atividades = [contexto.trim()];
+            }
+
+            // IA analisa cada atividade e sugere lembretes
+            const sugestoes = [];
+
+            atividades.forEach(atividade => {
+                const atividadeLower = atividade.toLowerCase();
+
+                if (atividadeLower.includes('reunião') || atividadeLower.includes('reuniao')) {
+                    sugestoes.push('Preparar material da reunião');
+                }
+
+                if (atividadeLower.includes('mercado') || atividadeLower.includes('compras')) {
+                    sugestoes.push('Fazer lista de compras');
+                }
+
+                if (atividadeLower.includes('estud') || atividadeLower.includes('aprender')) {
+                    sugestoes.push('Separar material de estudo');
+                }
+
+                if (atividadeLower.includes('médic') || atividadeLower.includes('medic') || atividadeLower.includes('consulta')) {
+                    sugestoes.push('Confirmar horário da consulta');
+                }
+
+                if (atividadeLower.includes('trabalho') || atividadeLower.includes('escritório') || atividadeLower.includes('escritorio')) {
+                    sugestoes.push('Preparar documentos do trabalho');
+                }
+
+                if (atividadeLower.includes('prova') || atividadeLower.includes('exame')) {
+                    sugestoes.push('Revisar conteúdo para prova');
+                }
+
+                // Se não encontrou nenhuma palavra-chave específica, cria sugestão genérica
+                if (sugestoes.length === 0 && atividade.length > 5) {
+                    sugestoes.push('Preparar para: ' + atividade.substring(0, 30));
+                }
+            });
+
+            // Criar lembretes sugeridos
+            sugestoes.forEach((sugestao, index) => {
+                const lembreteIA = {
+                    id: 'ia-' + Date.now() + '-' + index,
+                    titulo: "Sugestão IA: " + sugestao,
+                    descricao: "Baseado na sua descrição: " + contexto.substring(0, 50) + "...",
+                    data: new Date(Date.now() + (index + 1) * 60 * 60 * 1000).toISOString().slice(0, 16),
+                    prioridade: 2,
+                    criadoPorIA: true
+                };
+                lembretes.push(lembreteIA);
+            });
+
+            salvarDados();
+
+            if (sugestoes.length > 0) {
+                let mensagem = `✅ IA criou ${sugestoes.length} sugestões de lembretes!\n\n`;
+
+                if (contexto.includes(',')) {
+                    mensagem += `📅 MÚLTIPLOS COMPROMISSOS DETECTADOS:\n`;
+                    atividades.forEach(atividade => {
+                        mensagem += `• ${atividade}\n`;
+                    });
+                } else {
+                    mensagem += `🎯 COMPROMISSO ÚNICO DETECTADO:\n`;
+                    mensagem += `• ${atividades[0]}\n`;
+                }
+
+                alert(mensagem);
+                listarLembretes();
+                document.getElementById('contextoIA').value = '';
+            } else {
+                alert('💡 A IA não identificou atividades específicas para sugerir lembretes.\nTente ser mais detalhado na descrição da sua rotina.');
+            }
         }
 
         function criarLembrete() {
@@ -249,19 +362,20 @@
                 const dataFormatada = data.toLocaleString('pt-BR');
                 const prioridade = lembrete.prioridade === 3 ? '🔴 Alta' : lembrete.prioridade === 2 ? '🟡 Média' : '🟢 Baixa';
                 const hoje = new Date().toDateString() === data.toDateString();
+                const criadoPorIA = lembrete.criadoPorIA ? ' | 🤖 IA' : '';
 
                 return `
-                        <div class="lembrete-item" style="border-left: 4px solid ${lembrete.prioridade === 3 ? '#f56565' :
+                                <div class="lembrete-item" style="border-left: 4px solid ${lembrete.prioridade === 3 ? '#f56565' :
                         lembrete.prioridade === 2 ? '#ed8936' : '#48bb78'
                     };">
-                            <strong>${lembrete.titulo}</strong>
-                            <div style="color: #666; font-size: 0.9em;">
-                                ${dataFormatada} | ${prioridade} ${hoje ? '| 📅 Hoje' : ''}
-                            </div>
-                            ${lembrete.descricao ? `<div style="margin-top: 5px;">${lembrete.descricao}</div>` : ''}
-                            <button onclick="excluirLembrete(${lembrete.id})" style="background: #f56565; margin-top: 5px;">Excluir</button>
-                        </div>
-                    `;
+                                    <strong>${lembrete.titulo}</strong>
+                                    <div style="color: #666; font-size: 0.9em;">
+                                        ${dataFormatada} | ${prioridade} ${hoje ? '| 📅 Hoje' : ''} ${criadoPorIA}
+                                    </div>
+                                    ${lembrete.descricao ? `<div style="margin-top: 5px;">${lembrete.descricao}</div>` : ''}
+                                    <button onclick="excluirLembrete(${lembrete.id})" style="background: #f56565; margin-top: 5px;">Excluir</button>
+                                </div>
+                            `;
             }).join('');
         }
 
